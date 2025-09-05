@@ -27,7 +27,7 @@ public class InventoryServiceImpl {
  
 
     // Absolute path where you want to store images
-    private final String BASE_UPLOAD_DIR = "/uploads";
+    private final String BASE_UPLOAD_DIR = System.getProperty("user.dir") + "/uploads";
 
     public Inventory saveProductWithImages(Inventory product, List<MultipartFile> images) throws IOException {
         List<String> imagePaths = new ArrayList<>();
