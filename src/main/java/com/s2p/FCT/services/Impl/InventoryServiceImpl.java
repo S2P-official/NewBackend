@@ -23,7 +23,10 @@ public class InventoryServiceImpl {
     private InventoryRepository inventoryRepository;
 
     // Base upload directory inside project folder
-    private final String BASE_UPLOAD_DIR = System.getProperty("user.dir") + "/uploads";
+    // private final String BASE_UPLOAD_DIR = System.getProperty("user.dir") + "/uploads";
+    // Absolute path inside your project
+private final String BASE_UPLOAD_DIR = "/home/santosh/Backend/NewBackend/uploads";
+
 
     /**
      * Save product with images
