@@ -15,66 +15,73 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.s2p.FCT.entity.*;
+import com.s2p.FCT.entity.Inventory;
 import com.s2p.FCT.services.Impl.InventoryServiceImpl;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") //This is updated code
 @RestController
+@RequestMapping("/api")
 public class InventoryController {
 
     @Autowired
     private InventoryServiceImpl inventoryService;
 
     @Autowired
-    private ObjectMapper objectMapper; // Needed to convert JSON string to object
+    private ObjectMapper objectMapper;
 
+    // --- Add Product with Images ---
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
-        @RequestPart("Inventory") String inventoryJson, // <-- Accept as String
-        @RequestPart("images") List<MultipartFile> images
+            @RequestPart("Inventory") String inventoryJson,
+            @RequestPart("images") List<MultipartFile> images
     ) {
         try {
-            // Convert the JSON string to an AddInventory object
-        	Inventory inventory = objectMapper.readValue(inventoryJson, Inventory.class);
-
-            // Save to DB
+            Inventory inventory = objectMapper.readValue(inventoryJson, Inventory.class);
             Inventory saved = inventoryService.saveProductWithImages(inventory, images);
             return ResponseEntity.ok(saved);
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving product");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error saving product: " + e.getMessage());
         }
     }
-    
+
+    // --- Get All Products ---
     @GetMapping("/products")
     public ResponseEntity<List<Inventory>> getAllProducts() {
         List<Inventory> products = inventoryService.getAllProducts();
         return ResponseEntity.ok(products);
     }
-    
+
+    // --- Get Product by ID for Checkout ---
     @GetMapping("/checkout/{id}")
     public ResponseEntity<Inventory> getCheckoutProduct(@PathVariable UUID id) {
         Inventory product = inventoryService.getCheckoutProductById(id);
         return ResponseEntity.ok(product);
     }
 
-    
+    // --- Get Uploaded Images for Product ---
     @GetMapping("/uploads/{folderName}")
     public ResponseEntity<List<String>> getImages(@PathVariable String folderName) {
-        File folder = new File("/uploads" + "/" + folderName);
+        String baseUploadDir = System.getProperty("user.dir") + "/uploads";
+        File folder = new File(baseUploadDir + "/" + folderName);
+
         if (!folder.exists()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
         }
 
+        File[] files = folder.listFiles();
+        if (files == null || files.length == 0) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
         String baseUrl = "/uploads/" + folderName + "/";
-        List<String> imagePaths = Arrays.stream(folder.listFiles())
-            .filter(File::isFile)
-            .map(file -> baseUrl + file.getName())
-            .collect(Collectors.toList());
+        List<String> imagePaths = Arrays.stream(files)
+                .filter(File::isFile)
+                .map(file -> baseUrl + file.getName())
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(imagePaths);
     }
-
-
 }
+
